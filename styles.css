@@ -143,6 +143,26 @@ main, .foot {
 
 .strip__mark { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 
+.strip__row { display: flex; align-items: center; gap: var(--s3); }
+
+/* Language toggle — the segmented control's vocabulary at label scale. */
+.lang { display: flex; border: 1px solid var(--rule-strong); }
+
+.lang__btn {
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--rule-strong);
+  padding: 2px var(--s2);
+  color: var(--ink-dim);
+  font: 600 11px/1.4 var(--sans);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.lang__btn:last-child { border-right: 0; }
+.lang__btn:hover { color: var(--ink); }
+.lang__btn.is-on { background: var(--ink); color: var(--ground); }
+
 .strip__name {
   font-size: 13px;
   font-weight: 600;

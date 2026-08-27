@@ -161,6 +161,14 @@ eq('more stints than laps is refused', C.planStints(3, 4, 1), null);
 /* ------------------------------------------------------------------ */
 group('Guards — nothing unfinished reaches the screen');
 
+eq('errors are i18n keys, not sentences',
+  C.compute(withInput({ lapM: '', lapS: '' })).error, 'err.lapTime');
+/* 24h of 1s laps is 86400 laps completed, plus the lap you finish after the
+   clock expires. */
+eq('the absurd-laps error carries its variable',
+  C.compute(withInput({ raceH: '24', raceM: '0', lapM: '0', lapS: '1' })).errorVars.laps,
+  (86401).toLocaleString());
+
 ok('blank lap time errors', !!C.compute(withInput({ lapM: '', lapS: '' })).error);
 ok('zero lap time errors', !!C.compute(withInput({ lapM: '0', lapS: '0' })).error);
 ok('blank fuel errors', !!C.compute(withInput({ fuelUsed: '' })).error);

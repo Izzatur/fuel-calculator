@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Fuel Calculator — sim racing fuel and stint planner</title>
-<meta name="description" content="Work out race fuel and a pit strategy from the numbers you actually have. Enter fuel and lap time as a total over any number of laps — no per-lap arithmetic required.">
+<meta name="description" content="Work out race fuel and a pit strategy from the numbers you actually have. Enter fuel and lap time as a total over any number of laps — no per-lap arithmetic required. English and Bahasa Melayu.">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#14171A">
 <link rel="stylesheet" href="styles.css">
@@ -19,13 +19,13 @@ fuel plan instead of a field. It refuses the neon telemetry dashboard this
 category always ships.
 
 OWN-WORLD: Charcoal ground #14171A, ruled columns over alternating row tint,
-tabular monospace figures, uppercase letterspaced column heads. Session-best
-purple #7C4DD6, valid green #2FBF6B, warning amber #F2B705 — the timing
-vocabulary, load-bearing, never decorative. Flat inks only: no gradient, no
-glass, no glow.
+tabular monospace figures in Martian Mono, uppercase letterspaced column
+heads. Session-best purple #7C4DD6, valid green #2FBF6B, warning amber
+#F2B705 — the timing vocabulary, load-bearing, never decorative. Flat inks
+only: no gradient, no glass, no glow.
 
 STORY: A racer transcribes numbers off a practice run and leaves with a fuel
-load and a stop plan.
+load and a stop plan, in English or Bahasa Melayu.
 
 FIRST VIEWPORT: Sticky session strip carrying RACE LAPS, FUEL/LAP and LOAD.
 Entry grid beneath it. Strategy tabulation below, fastest row flagged purple,
@@ -42,20 +42,26 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
 <header class="strip" id="strip">
   <div class="strip__mark">
-    <span class="strip__name">Fuel Calculator</span>
+    <div class="strip__row">
+      <span class="strip__name" data-i18n="app.name">Fuel Calculator</span>
+      <div class="lang" role="group" aria-label="Language" id="langGroup" data-i18n-aria-label="lang.label">
+        <button type="button" class="lang__btn is-on" data-lang="en" data-i18n="lang.en">EN</button>
+        <button type="button" class="lang__btn" data-lang="ms" data-i18n="lang.ms">BM</button>
+      </div>
+    </div>
     <span class="strip__session" id="sessionLabel">No session</span>
   </div>
   <dl class="strip__readouts">
     <div class="readout">
-      <dt>Race laps</dt>
+      <dt data-i18n="readout.laps">Race laps</dt>
       <dd class="num" id="outRaceLaps">—</dd>
     </div>
     <div class="readout">
-      <dt>Fuel / lap</dt>
+      <dt data-i18n="readout.fuelPerLap">Fuel / lap</dt>
       <dd class="num" id="outFuelPerLap">—</dd>
     </div>
     <div class="readout readout--lead">
-      <dt>Load</dt>
+      <dt data-i18n="readout.load">Load</dt>
       <dd class="num" id="outLoad">—</dd>
     </div>
   </dl>
@@ -64,99 +70,99 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <main>
 
   <section class="panel" aria-labelledby="entryHead">
-    <h2 class="panel__head" id="entryHead">Session entry</h2>
+    <h2 class="panel__head" id="entryHead" data-i18n="entry.head">Session entry</h2>
 
     <form id="calcForm" novalidate>
 
       <fieldset class="seg" aria-labelledby="fmtLegend">
-        <legend id="fmtLegend" class="field__label">Race format</legend>
+        <legend id="fmtLegend" class="field__label" data-i18n="entry.format">Race format</legend>
         <div class="seg__track" role="group">
           <input type="radio" name="fmt" id="fmtTime" value="time" checked>
-          <label for="fmtTime">By time</label>
+          <label for="fmtTime" data-i18n="entry.byTime">By time</label>
           <input type="radio" name="fmt" id="fmtLaps" value="laps">
-          <label for="fmtLaps">By laps</label>
+          <label for="fmtLaps" data-i18n="entry.byLaps">By laps</label>
         </div>
       </fieldset>
 
       <div class="grid">
 
         <div class="cell" id="cellTime">
-          <span class="field__label" id="lblRaceTime">Race length</span>
+          <span class="field__label" id="lblRaceTime" data-i18n="entry.raceLength">Race length</span>
           <div class="inputs" role="group" aria-labelledby="lblRaceTime">
             <span class="unitbox">
-              <input class="num" type="text" inputmode="numeric" id="raceH" value="1" autocomplete="off" aria-label="Race hours">
-              <span class="unit">h</span>
+              <input class="num" type="text" inputmode="numeric" id="raceH" value="1" autocomplete="off" aria-label="Race hours" data-i18n-aria-label="aria.raceHours">
+              <span class="unit" data-i18n="unit.h">h</span>
             </span>
             <span class="unitbox">
-              <input class="num" type="text" inputmode="numeric" id="raceM" value="0" autocomplete="off" aria-label="Race minutes">
-              <span class="unit">min</span>
+              <input class="num" type="text" inputmode="numeric" id="raceM" value="0" autocomplete="off" aria-label="Race minutes" data-i18n-aria-label="aria.raceMinutes">
+              <span class="unit" data-i18n="unit.min">min</span>
             </span>
           </div>
         </div>
 
         <div class="cell" id="cellLaps" hidden>
-          <label class="field__label" for="raceLapsIn">Race distance</label>
+          <label class="field__label" for="raceLapsIn" data-i18n="entry.raceDistance">Race distance</label>
           <div class="inputs">
             <span class="unitbox">
               <input class="num" type="text" inputmode="numeric" id="raceLapsIn" value="25" autocomplete="off">
-              <span class="unit">laps</span>
+              <span class="unit" data-i18n="unit.laps">laps</span>
             </span>
           </div>
         </div>
 
         <div class="cell" id="cellLapTime">
-          <span class="field__label" id="lblLapTime">Lap time</span>
+          <span class="field__label" id="lblLapTime" data-i18n="entry.lapTime">Lap time</span>
           <div class="inputs" role="group" aria-labelledby="lblLapTime">
             <span class="unitbox">
-              <input class="num" type="text" inputmode="numeric" id="lapM" value="2" autocomplete="off" aria-label="Lap time minutes">
-              <span class="unit">m</span>
+              <input class="num" type="text" inputmode="numeric" id="lapM" value="2" autocomplete="off" aria-label="Lap time minutes" data-i18n-aria-label="aria.lapMinutes">
+              <span class="unit" data-i18n="unit.m">m</span>
             </span>
             <span class="unitbox">
-              <input class="num" type="text" inputmode="decimal" id="lapS" value="05.0" autocomplete="off" aria-label="Lap time seconds">
-              <span class="unit">s</span>
+              <input class="num" type="text" inputmode="decimal" id="lapS" value="05.0" autocomplete="off" aria-label="Lap time seconds" data-i18n-aria-label="aria.lapSeconds">
+              <span class="unit" data-i18n="unit.s">s</span>
             </span>
           </div>
           <div class="over">
-            <label for="lapN">over</label>
+            <label for="lapN" data-i18n="entry.over">over</label>
             <input class="num" type="text" inputmode="numeric" id="lapN" value="1" autocomplete="off">
-            <span>lap<span data-plural="lapN">s</span></span>
+            <span data-lapword="lapN">lap</span>
           </div>
         </div>
 
         <div class="cell">
-          <label class="field__label" for="fuelUsed">Fuel used</label>
+          <label class="field__label" for="fuelUsed" data-i18n="entry.fuelUsed">Fuel used</label>
           <div class="inputs">
             <span class="unitbox">
               <input class="num" type="text" inputmode="decimal" id="fuelUsed" value="3.10" autocomplete="off">
-              <span class="unit">L</span>
+              <span class="unit" data-i18n="unit.L">L</span>
             </span>
           </div>
           <div class="over">
-            <label for="fuelN">over</label>
+            <label for="fuelN" data-i18n="entry.over">over</label>
             <input class="num" type="text" inputmode="numeric" id="fuelN" value="1" autocomplete="off">
-            <span>lap<span data-plural="fuelN">s</span></span>
+            <span data-lapword="fuelN">lap</span>
           </div>
         </div>
 
         <div class="cell">
-          <label class="field__label" for="tank">Tank capacity</label>
+          <label class="field__label" for="tank" data-i18n="entry.tank">Tank capacity</label>
           <div class="inputs">
             <span class="unitbox">
               <input class="num" type="text" inputmode="decimal" id="tank" value="110" autocomplete="off">
-              <span class="unit">L</span>
+              <span class="unit" data-i18n="unit.L">L</span>
             </span>
           </div>
         </div>
 
         <div class="cell">
-          <label class="field__label" for="pitLoss">Pit stop loss</label>
+          <label class="field__label" for="pitLoss" data-i18n="entry.pitLoss">Pit stop loss</label>
           <div class="inputs">
             <span class="unitbox">
               <input class="num" type="text" inputmode="numeric" id="pitLoss" value="30" autocomplete="off">
-              <span class="unit">s</span>
+              <span class="unit" data-i18n="unit.s">s</span>
             </span>
           </div>
-          <p class="hint">Time lost per stop, pit entry to exit.</p>
+          <p class="hint" data-i18n="entry.pitHint">Time lost per stop, pit entry to exit.</p>
         </div>
 
       </div>
@@ -166,7 +172,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
   </section>
 
   <section class="panel panel--result" aria-labelledby="loadHead">
-    <h2 class="panel__head" id="loadHead">Fuel load</h2>
+    <h2 class="panel__head" id="loadHead" data-i18n="load.head">Fuel load</h2>
     <!-- The announcement is scoped to one debounced sentence: a live region
          wrapping the figure, the basis and six breakdown rows would re-read
          the whole block on every keystroke. -->
@@ -174,29 +180,29 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
     <div class="load" id="loadBlock">
       <div class="load__figure">
         <span class="load__value num" id="loadValue">—</span>
-        <span class="load__unit">L</span>
+        <span class="load__unit" data-i18n="unit.L">L</span>
       </div>
-      <p class="load__basis" id="loadBasis">Enter a lap time and a fuel figure.</p>
+      <p class="load__basis" id="loadBasis" data-i18n="load.empty">Enter a lap time and a fuel figure.</p>
       <dl class="load__breakdown" id="loadBreakdown"></dl>
     </div>
   </section>
 
   <section class="panel" aria-labelledby="stratHead">
-    <h2 class="panel__head" id="stratHead">Strategy</h2>
+    <h2 class="panel__head" id="stratHead" data-i18n="strat.head">Strategy</h2>
     <div class="tablewrap">
       <table class="tab" id="stratTable">
-        <caption class="vh">Pit strategies by stop count</caption>
+        <caption class="vh" data-i18n="strat.caption">Pit strategies by stop count</caption>
         <thead>
           <tr>
-            <th scope="col" class="tab__flagcol"><span class="vh">Status</span></th>
-            <th scope="col">Stops</th>
-            <th scope="col">Stints</th>
-            <th scope="col" class="tab__n">Laps / stint</th>
-            <th scope="col" class="tab__n">Start load</th>
-            <th scope="col" class="tab__n">Fuel / stint</th>
-            <th scope="col" class="tab__n">Total fuel</th>
-            <th scope="col" class="tab__n">Race time</th>
-            <th scope="col" class="tab__n">Delta</th>
+            <th scope="col" class="tab__flagcol"><span class="vh" data-i18n="strat.status">Status</span></th>
+            <th scope="col" class="tab__stops" data-i18n="strat.stops">Stops</th>
+            <th scope="col" data-i18n="strat.stints">Stints</th>
+            <th scope="col" class="tab__n" data-i18n="strat.lapsPerStint">Laps / stint</th>
+            <th scope="col" class="tab__n" data-i18n="strat.startLoad">Start load</th>
+            <th scope="col" class="tab__n" data-i18n="strat.fuelPerStint">Fuel / stint</th>
+            <th scope="col" class="tab__n" data-i18n="strat.totalFuel">Total fuel</th>
+            <th scope="col" class="tab__n" data-i18n="strat.raceTime">Race time</th>
+            <th scope="col" class="tab__n" data-i18n="strat.delta">Delta</th>
           </tr>
         </thead>
         <tbody id="stratBody"></tbody>
@@ -204,26 +210,26 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
     </div>
     <p class="tab__note" id="stratNote"></p>
     <ul class="legend">
-      <li><span class="flag flag--best" aria-hidden="true"></span> Fastest viable</li>
-      <li><span class="flag flag--ok" aria-hidden="true"></span> Viable</li>
-      <li><span class="flag flag--bad" aria-hidden="true"></span> Exceeds tank</li>
+      <li><span class="flag flag--best" aria-hidden="true"></span> <span data-i18n="strat.fastestViable">Fastest viable</span></li>
+      <li><span class="flag flag--ok" aria-hidden="true"></span> <span data-i18n="strat.viable">Viable</span></li>
+      <li><span class="flag flag--bad" aria-hidden="true"></span> <span data-i18n="strat.exceedsTank">Exceeds tank</span></li>
     </ul>
   </section>
 
   <section class="panel" aria-labelledby="saveHead">
-    <h2 class="panel__head" id="saveHead">Saved setups</h2>
+    <h2 class="panel__head" id="saveHead" data-i18n="save.head">Saved setups</h2>
     <div class="save">
       <div class="save__row">
-        <label class="vh" for="presetName">Setup name</label>
-        <input type="text" id="presetName" placeholder="e.g. GT3 · Spa · 60 min" autocomplete="off" maxlength="48">
-        <button type="button" class="btn" id="savePreset">Save</button>
+        <label class="vh" for="presetName" data-i18n="aria.presetName">Setup name</label>
+        <input type="text" id="presetName" placeholder="e.g. GT3 · Spa · 60 min" data-i18n-placeholder="save.placeholder" autocomplete="off" maxlength="48">
+        <button type="button" class="btn" id="savePreset" data-i18n="save.save">Save</button>
       </div>
       <ul class="presets" id="presetList"></ul>
       <div class="save__row">
-        <button type="button" class="btn btn--wide" id="copyLink">Copy shareable link</button>
+        <button type="button" class="btn btn--wide" id="copyLink" data-i18n="save.copyLink">Copy shareable link</button>
       </div>
       <div class="save__row" id="shareFallback" hidden>
-        <label class="vh" for="shareUrl">Shareable link</label>
+        <label class="vh" for="shareUrl" data-i18n="aria.shareUrl">Shareable link</label>
         <input type="text" id="shareUrl" readonly>
       </div>
       <p class="hint" id="saveStatus" aria-live="polite"></p>
@@ -233,10 +239,11 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 </main>
 
 <footer class="foot">
-  <p>Every load figure includes one formation lap and one spare lap. Timed races are calculated to the lap you finish <em>after</em> the clock expires.</p>
-  <p class="foot__meta">Litres. No fuel-weight or refuel-rate modelling — see the README.</p>
+  <p data-i18n="foot.margin">Every load figure includes one formation lap and one spare lap. Timed races are calculated to the lap you finish after the clock expires.</p>
+  <p class="foot__meta" data-i18n="foot.meta">Litres. No fuel-weight or refuel-rate modelling — see the README.</p>
 </footer>
 
+<script src="i18n.js"></script>
 <script src="calc.js"></script>
 <script src="app.js"></script>
 </body>

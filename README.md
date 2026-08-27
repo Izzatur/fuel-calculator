@@ -11,6 +11,9 @@ It also treats pit strategy as a comparison rather than a verdict: every stop
 count is laid out side by side with the laps and fuel for each stint, and the
 ones your tank cannot support are marked as such instead of hidden.
 
+Available in **English and Bahasa Melayu** — toggle at the top left. Your
+choice is remembered, and it travels in the share link.
+
 ## Using it
 
 | Input | Notes |
@@ -86,12 +89,24 @@ or serve the folder with anything.
 The calculation core in `calc.js` is pure and has no DOM dependency:
 
 ```
-node test-calc.js
+node test-calc.js    # 62 checks
+node test-i18n.js    # 25 checks
 ```
 
-60 checks covering the timed-lap rule, the "over N laps" equivalence, stint
+`test-calc.js` covers the timed-lap rule, the "over N laps" equivalence, stint
 balancing, tank viability, and input guards (blank, zero, negative, and
 non-numeric entry must never produce `NaN`, `Infinity`, or a negative load).
+
+`test-i18n.js` covers the translations: every English key has a Malay
+counterpart, no Malay string is an untranslated copy, `{placeholder}` slots
+match across both languages, plural rules behave (English inflects, Malay
+does not), and every key referenced in `app.js`, `calc.js` or `index.html`
+actually exists. A missing translation falls back to English silently at
+runtime, so it has to be caught here instead.
+
+Note that `calc.js` returns error **keys** (`err.lapTime`), not sentences.
+The calculation layer has no opinion about language, and switching language
+re-renders an error without recomputing anything.
 
 ## Files
 
@@ -101,7 +116,9 @@ non-numeric entry must never produce `NaN`, `Infinity`, or a negative load).
 | `styles.css` | All styling |
 | `calc.js` | Pure calculation core — no DOM |
 | `app.js` | DOM layer, URL state, saved setups |
-| `test-calc.js` | Node test suite |
+| `i18n.js` | English + Bahasa Melayu strings |
+| `test-calc.js` | Calculation test suite |
+| `test-i18n.js` | Translation test suite |
 | `fonts/` | Martian Mono, 3 weights, ~30 KB total |
 | `PRODUCT.md` | Product decisions and their reasoning |
 | `DESIGN.md` | The visual system as built |

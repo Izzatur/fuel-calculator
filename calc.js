@@ -162,23 +162,27 @@
      `input` is a plain object of raw values (strings or numbers):
        byTime, raceH, raceM, raceLapsIn, lapM, lapS, lapN,
        fuelUsed, fuelN, tank, pitLoss
-     Returns { error: "sentence" } or a full result. Never returns NaN. */
+
+     Returns { error: "<i18n key>", errorVars: {...} } or a full result.
+     Errors are KEYS, not sentences: this module has no opinion about
+     language, and switching language must re-render an error without
+     recomputing anything. Never returns NaN. */
   function compute(input) {
     var byTime = !!input.byTime;
 
     var lapN = divisor(input.lapN);
     var fuelN = divisor(input.fuelN);
-    if (lapN === null) return { error: 'Lap-time lap count must be 1 or more.' };
-    if (fuelN === null) return { error: 'Fuel lap count must be 1 or more.' };
+    if (lapN === null) return { error: 'err.lapDivisor' };
+    if (fuelN === null) return { error: 'err.fuelDivisor' };
 
     var lapM = parseNum(input.lapM) || 0;
     var lapS = parseNum(input.lapS) || 0;
     var lapTotal = lapM * 60 + lapS;
-    if (!(lapTotal > 0)) return { error: 'Enter a lap time.' };
+    if (!(lapTotal > 0)) return { error: 'err.lapTime' };
     var avgLap = lapTotal / lapN;
 
     var fuelTotal = parseNum(input.fuelUsed);
-    if (fuelTotal === null || !(fuelTotal > 0)) return { error: 'Enter the fuel you used.' };
+    if (fuelTotal === null || !(fuelTotal > 0)) return { error: 'err.fuel' };
     var fuelPerLap = fuelTotal / fuelN;
 
     var raceLaps, raceSeconds;
@@ -186,18 +190,18 @@
       var h = parseNum(input.raceH) || 0;
       var m = parseNum(input.raceM) || 0;
       raceSeconds = h * 3600 + m * 60;
-      if (!(raceSeconds > 0)) return { error: 'Enter a race length.' };
+      if (!(raceSeconds > 0)) return { error: 'err.raceLength' };
       /* A timed race ends on the lap you finish AFTER the clock expires. */
       raceLaps = Math.floor(raceSeconds / avgLap) + 1;
     } else {
       var rl = parseNum(input.raceLapsIn);
-      if (rl === null || rl < 1) return { error: 'Enter a race distance in laps.' };
+      if (rl === null || rl < 1) return { error: 'err.raceDistance' };
       raceLaps = Math.floor(rl);
       raceSeconds = raceLaps * avgLap;
     }
 
     if (raceLaps > MAX_RACE_LAPS) {
-      return { error: 'That works out to ' + raceLaps.toLocaleString() + ' laps — check the lap time.' };
+      return { error: 'err.absurd', errorVars: { laps: raceLaps.toLocaleString() } };
     }
 
     var marginLaps = FORMATION_LAPS + SPARE_LAPS;
