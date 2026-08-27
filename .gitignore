@@ -1,0 +1,8 @@
+# Impeccable local working state: decision-round artifacts and review captures.
+# The direction contract that matters is committed inside index.html.
+.impeccable/
+
+node_modules/
+*.log
+Thumbs.db
+.DS_Store

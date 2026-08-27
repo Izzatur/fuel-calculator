@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fuel Calculator — sim racing fuel and stint planner</title>
+<meta name="description" content="Work out race fuel and a pit strategy from the numbers you actually have. Enter fuel and lap time as a total over any number of laps — no per-lap arithmetic required.">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#14171A">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2314171A'/%3E%3Crect x='5' y='6' width='22' height='3' fill='%237C4DD6'/%3E%3Crect x='5' y='13' width='22' height='3' fill='%232FBF6B'/%3E%3Crect x='5' y='20' width='14' height='3' fill='%238A939B'/%3E%3C/svg%3E">
+</head>
+<body>
+<!--
+IMPECCABLE DIRECTION CONTRACT · seed 660d2859 · safer register, round 1
+
+THESIS: The live timing tabulation racers already read mid-session, holding a
+fuel plan instead of a field. It refuses the neon telemetry dashboard this
+category always ships.
+
+OWN-WORLD: Charcoal ground #14171A, ruled columns over alternating row tint,
+tabular monospace figures, uppercase letterspaced column heads. Session-best
+purple #7C4DD6, valid green #2FBF6B, warning amber #F2B705 — the timing
+vocabulary, load-bearing, never decorative. Flat inks only: no gradient, no
+glass, no glow.
+
+STORY: A racer transcribes numbers off a practice run and leaves with a fuel
+load and a stop plan.
+
+FIRST VIEWPORT: Sticky session strip carrying RACE LAPS, FUEL/LAP and LOAD.
+Entry grid beneath it. Strategy tabulation below, fastest row flagged purple,
+non-viable rows struck amber.
+
+SIGNATURE INTERACTION: When the fastest viable strategy changes, that row
+takes the purple flag with a single session-best flash; figures update in
+tabular columns without shifting layout.
+
+FORM: Live timing screen; candidate 1 of the safer hand; seed 660d2859.
+
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+-->
+
+<header class="strip" id="strip">
+  <div class="strip__mark">
+    <span class="strip__name">Fuel Calculator</span>
+    <span class="strip__session" id="sessionLabel">No session</span>
+  </div>
+  <dl class="strip__readouts">
+    <div class="readout">
+      <dt>Race laps</dt>
+      <dd class="num" id="outRaceLaps">—</dd>
+    </div>
+    <div class="readout">
+      <dt>Fuel / lap</dt>
+      <dd class="num" id="outFuelPerLap">—</dd>
+    </div>
+    <div class="readout readout--lead">
+      <dt>Load</dt>
+      <dd class="num" id="outLoad">—</dd>
+    </div>
+  </dl>
+</header>
+
+<main>
+
+  <section class="panel" aria-labelledby="entryHead">
+    <h2 class="panel__head" id="entryHead">Session entry</h2>
+
+    <form id="calcForm" novalidate>
+
+      <fieldset class="seg" aria-labelledby="fmtLegend">
+        <legend id="fmtLegend" class="field__label">Race format</legend>
+        <div class="seg__track" role="group">
+          <input type="radio" name="fmt" id="fmtTime" value="time" checked>
+          <label for="fmtTime">By time</label>
+          <input type="radio" name="fmt" id="fmtLaps" value="laps">
+          <label for="fmtLaps">By laps</label>
+        </div>
+      </fieldset>
+
+      <div class="grid">
+
+        <div class="cell" id="cellTime">
+          <span class="field__label" id="lblRaceTime">Race length</span>
+          <div class="inputs" role="group" aria-labelledby="lblRaceTime">
+            <span class="unitbox">
+              <input class="num" type="text" inputmode="numeric" id="raceH" value="1" autocomplete="off" aria-label="Race hours">
+              <span class="unit">h</span>
+            </span>
+            <span class="unitbox">
+              <input class="num" type="text" inputmode="numeric" id="raceM" value="0" autocomplete="off" aria-label="Race minutes">
+              <span class="unit">min</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="cell" id="cellLaps" hidden>
+          <label class="field__label" for="raceLapsIn">Race distance</label>
+          <div class="inputs">
+            <span class="unitbox">
+              <input class="num" type="text" inputmode="numeric" id="raceLapsIn" value="25" autocomplete="off">
+              <span class="unit">laps</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="cell" id="cellLapTime">
+          <span class="field__label" id="lblLapTime">Lap time</span>
+          <div class="inputs" role="group" aria-labelledby="lblLapTime">
+            <span class="unitbox">
+              <input class="num" type="text" inputmode="numeric" id="lapM" value="2" autocomplete="off" aria-label="Lap time minutes">
+              <span class="unit">m</span>
+            </span>
+            <span class="unitbox">
+              <input class="num" type="text" inputmode="decimal" id="lapS" value="05.0" autocomplete="off" aria-label="Lap time seconds">
+              <span class="unit">s</span>
+            </span>
+          </div>
+          <div class="over">
+            <label for="lapN">over</label>
+            <input class="num" type="text" inputmode="numeric" id="lapN" value="1" autocomplete="off">
+            <span>lap<span data-plural="lapN">s</span></span>
+          </div>
+        </div>
+
+        <div class="cell">
+          <label class="field__label" for="fuelUsed">Fuel used</label>
+          <div class="inputs">
+            <span class="unitbox">
+              <input class="num" type="text" inputmode="decimal" id="fuelUsed" value="3.10" autocomplete="off">
+              <span class="unit">L</span>
+            </span>
+          </div>
+          <div class="over">
+            <label for="fuelN">over</label>
+            <input class="num" type="text" inputmode="numeric" id="fuelN" value="1" autocomplete="off">
+            <span>lap<span data-plural="fuelN">s</span></span>
+          </div>
+        </div>
+
+        <div class="cell">
+          <label class="field__label" for="tank">Tank capacity</label>
+          <div class="inputs">
+            <span class="unitbox">
+              <input class="num" type="text" inputmode="decimal" id="tank" value="110" autocomplete="off">
+              <span class="unit">L</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="cell">
+          <label class="field__label" for="pitLoss">Pit stop loss</label>
+          <div class="inputs">
+            <span class="unitbox">
+              <input class="num" type="text" inputmode="numeric" id="pitLoss" value="30" autocomplete="off">
+              <span class="unit">s</span>
+            </span>
+          </div>
+          <p class="hint">Time lost per stop, pit entry to exit.</p>
+        </div>
+
+      </div>
+
+      <p class="derived" id="derived"></p>
+    </form>
+  </section>
+
+  <section class="panel panel--result" aria-labelledby="loadHead">
+    <h2 class="panel__head" id="loadHead">Fuel load</h2>
+    <!-- The announcement is scoped to one debounced sentence: a live region
+         wrapping the figure, the basis and six breakdown rows would re-read
+         the whole block on every keystroke. -->
+    <p class="vh" id="loadAnnounce" aria-live="polite"></p>
+    <div class="load" id="loadBlock">
+      <div class="load__figure">
+        <span class="load__value num" id="loadValue">—</span>
+        <span class="load__unit">L</span>
+      </div>
+      <p class="load__basis" id="loadBasis">Enter a lap time and a fuel figure.</p>
+      <dl class="load__breakdown" id="loadBreakdown"></dl>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="stratHead">
+    <h2 class="panel__head" id="stratHead">Strategy</h2>
+    <div class="tablewrap">
+      <table class="tab" id="stratTable">
+        <caption class="vh">Pit strategies by stop count</caption>
+        <thead>
+          <tr>
+            <th scope="col" class="tab__flagcol"><span class="vh">Status</span></th>
+            <th scope="col">Stops</th>
+            <th scope="col">Stints</th>
+            <th scope="col" class="tab__n">Laps / stint</th>
+            <th scope="col" class="tab__n">Start load</th>
+            <th scope="col" class="tab__n">Fuel / stint</th>
+            <th scope="col" class="tab__n">Total fuel</th>
+            <th scope="col" class="tab__n">Race time</th>
+            <th scope="col" class="tab__n">Delta</th>
+          </tr>
+        </thead>
+        <tbody id="stratBody"></tbody>
+      </table>
+    </div>
+    <p class="tab__note" id="stratNote"></p>
+    <ul class="legend">
+      <li><span class="flag flag--best" aria-hidden="true"></span> Fastest viable</li>
+      <li><span class="flag flag--ok" aria-hidden="true"></span> Viable</li>
+      <li><span class="flag flag--bad" aria-hidden="true"></span> Exceeds tank</li>
+    </ul>
+  </section>
+
+  <section class="panel" aria-labelledby="saveHead">
+    <h2 class="panel__head" id="saveHead">Saved setups</h2>
+    <div class="save">
+      <div class="save__row">
+        <label class="vh" for="presetName">Setup name</label>
+        <input type="text" id="presetName" placeholder="e.g. GT3 · Spa · 60 min" autocomplete="off" maxlength="48">
+        <button type="button" class="btn" id="savePreset">Save</button>
+      </div>
+      <ul class="presets" id="presetList"></ul>
+      <div class="save__row">
+        <button type="button" class="btn btn--wide" id="copyLink">Copy shareable link</button>
+      </div>
+      <div class="save__row" id="shareFallback" hidden>
+        <label class="vh" for="shareUrl">Shareable link</label>
+        <input type="text" id="shareUrl" readonly>
+      </div>
+      <p class="hint" id="saveStatus" aria-live="polite"></p>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <p>Every load figure includes one formation lap and one spare lap. Timed races are calculated to the lap you finish <em>after</em> the clock expires.</p>
+  <p class="foot__meta">Litres. No fuel-weight or refuel-rate modelling — see the README.</p>
+</footer>
+
+<script src="calc.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

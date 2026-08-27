@@ -1,0 +1,842 @@
+/* ==========================================================================
+   Fuel Calculator — The Timing Screen
+   Ruled columns, tabular figures, timing-vocabulary colour. Flat inks only:
+   no gradient, no glass, no glow. See the direction contract in index.html.
+   ========================================================================== */
+
+/* Martian Mono carries every figure on this page, including the 96px load
+   value. Delegating the display voice to whatever mono the OS happens to
+   ship — Consolas, SF Mono, Liberation Mono — is three different designs.
+   SIL Open Font License 1.1; see fonts/LICENSE-MartianMono.txt. */
+@font-face {
+  font-family: "Martian Mono";
+  src: url("fonts/martian-mono-latin-400-normal.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Martian Mono";
+  src: url("fonts/martian-mono-latin-500-normal.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Martian Mono";
+  src: url("fonts/martian-mono-latin-600-normal.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Ground and structure */
+  --ground:      #14171A;
+  --panel:       #1A1E22;
+  --row-alt:     #1E2328;
+  --rule:        #272D33;
+  --rule-strong: #333B43;
+
+  /* Ink */
+  --ink:         #E9ECEF;
+  --ink-mid:     #A8B1B9;
+  --ink-dim:     #7C868E;
+
+  /* Timing vocabulary — load-bearing, never decorative */
+  --best:        #7C4DD6;
+  --best-ink:    #C4A9FF;
+  --ok:          #2FBF6B;
+  --ok-ink:      #6FE0A2;
+  --warn:        #F2B705;
+  --warn-ink:    #F7CF57;
+
+  /* Type */
+  --sans: system-ui, -apple-system, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --mono: "Martian Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+
+  /* Rhythm */
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+  --s5: 24px; --s6: 32px; --s7: 48px;
+
+  --strip-h: 68px;
+  --shell: 1600px;
+  --measure: 44rem;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+/* .cell sets display:flex, which would otherwise defeat the hidden attribute
+   on the race-format fields. */
+[hidden] { display: none !important; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font: 400 16px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+h1, h2, p, dl, dd, figure { margin: 0; }
+ul { margin: 0; padding: 0; list-style: none; }
+
+.num {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -0.01em;
+}
+
+.vh {
+  position: absolute; width: 1px; height: 1px;
+  margin: -1px; padding: 0; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+
+:focus-visible {
+  outline: 2px solid var(--best-ink);
+  outline-offset: 2px;
+}
+
+/* Selection is the highest-traffic act on a page built for transcribing
+   figures; the default system blue is a foreign ink here. */
+::selection { background: var(--best); color: #fff; }
+
+html { scrollbar-color: var(--rule-strong) var(--ground); scrollbar-width: thin; }
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: var(--ground); }
+::-webkit-scrollbar-thumb { background: var(--rule-strong); border: 3px solid var(--ground); }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-dim); }
+
+/* --------------------------------------------------------------------------
+   Session strip — sticky, carries the answer at every scroll position
+   -------------------------------------------------------------------------- */
+
+main, .foot {
+  max-width: var(--shell);
+  margin-inline: auto;
+  width: 100%;
+}
+
+/* The session bar is full-bleed — a timing strip that stops short of the
+   display edge reads as a floating panel. Its contents are shell-capped by
+   padding instead, so they still line up with the columns below. */
+.strip {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  min-height: var(--strip-h);
+  padding-block: var(--s2);
+  padding-top: calc(var(--s2) + env(safe-area-inset-top));
+  padding-inline: calc(max(0px, (100% - var(--shell)) / 2) + var(--s4));
+  background: var(--panel);
+  border-bottom: 1px solid var(--rule-strong);
+}
+
+.strip__mark { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.strip__name {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.strip__session {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-dim);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.strip__readouts {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+.readout {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  padding: 0 var(--s3);
+  border-left: 1px solid var(--rule);
+}
+
+.readout dt {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+
+.readout dd {
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.readout--lead { padding-right: 0; }
+.readout--lead dt { color: var(--best-ink); }
+.readout--lead dd { font-size: 24px; color: var(--best-ink); }
+
+/* --------------------------------------------------------------------------
+   Panels
+   -------------------------------------------------------------------------- */
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.panel {
+  background: var(--panel);
+  padding: var(--s5) var(--s4) var(--s6);
+}
+
+.panel__head {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  padding-bottom: var(--s2);
+  margin-bottom: var(--s5);
+  border-bottom: 1px solid var(--rule-strong);
+}
+
+/* --------------------------------------------------------------------------
+   Segmented race-format control
+   -------------------------------------------------------------------------- */
+
+.seg { border: 0; padding: 0; margin: 0 0 var(--s5); }
+
+.seg__track {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--rule-strong);
+}
+
+.seg__track input { position: absolute; opacity: 0; pointer-events: none; }
+
+.seg__track label {
+  padding: var(--s3) var(--s2);
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-mid);
+  cursor: pointer;
+  user-select: none;
+  border-right: 1px solid var(--rule-strong);
+}
+
+.seg__track label:last-of-type { border-right: 0; }
+
+.seg__track input:checked + label {
+  background: var(--ink);
+  color: var(--ground);
+}
+
+.seg__track input:focus-visible + label {
+  outline: 2px solid var(--best-ink);
+  outline-offset: -2px;
+}
+
+/* --------------------------------------------------------------------------
+   Entry grid
+   -------------------------------------------------------------------------- */
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+}
+
+.cell {
+  background: var(--panel);
+  padding: var(--s3) var(--s4) var(--s4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+/* An odd number of visible cells would otherwise leave a bare rule-coloured
+   slot in the two-column grid. The last cell takes the full width instead. */
+.grid > .cell:last-child { grid-column: 1 / -1; }
+
+.field__label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.inputs { display: flex; gap: var(--s2); align-items: stretch; }
+
+.unitbox {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s1);
+  flex: 1 1 0;
+  min-width: 0;
+  border-bottom: 2px solid var(--rule-strong);
+  padding-bottom: 2px;
+  transition: border-color 120ms linear;
+}
+
+.unitbox:focus-within { border-bottom-color: var(--best); }
+
+.unitbox input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  padding: var(--s1) 0;
+  color: var(--ink);
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.unitbox input:focus { outline: none; }
+
+.unit {
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+/* The differentiator: any figure can be entered as a total over N laps */
+.over {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.over input {
+  width: 3.5ch;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--rule-strong);
+  padding: 2px 0;
+  color: var(--ok-ink);
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  /* Also an input, so also 16px — see the iOS zoom note on #presetName. */
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.over input:focus { outline: none; border-bottom-color: var(--ok); }
+
+.hint {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--ink-dim);
+}
+
+.derived {
+  margin-top: var(--s4);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-mid);
+  letter-spacing: 0.02em;
+}
+
+.derived b { color: var(--ok-ink); font-weight: 600; }
+.nowrap { white-space: nowrap; }
+
+.derived--err { color: var(--warn-ink); }
+
+/* --------------------------------------------------------------------------
+   Fuel load
+   -------------------------------------------------------------------------- */
+
+/* The head rule and the breakdown rules are both ruled edges in the same
+   panel; letting them stop at different widths gives it two right edges. */
+.panel--result .panel__head { max-width: var(--measure); }
+
+.load__figure { display: flex; align-items: baseline; gap: var(--s2); }
+
+.load__value {
+  font-size: 64px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--best-ink);
+}
+
+.load__unit {
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.load__basis {
+  margin-top: var(--s3);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-mid);
+  max-width: 46ch;
+}
+
+/* Its own measure: at 1920 the shell is wide enough to strand a term and its
+   value a thousand pixels apart, and the pairing stops reading. */
+.load__breakdown {
+  margin-top: var(--s5);
+  max-width: var(--measure);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0;
+  border-top: 1px solid var(--rule);
+}
+
+.load__breakdown dt,
+.load__breakdown dd {
+  padding: var(--s2) 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 13px;
+}
+
+.load__breakdown dt { color: var(--ink-mid); }
+
+.load__breakdown dd {
+  text-align: right;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+/* The class sits on the dt/dd themselves — a descendant selector here
+   matched nothing, so no total ever rendered as one. */
+.load__breakdown dt.is-total,
+.load__breakdown dd.is-total {
+  font-weight: 600;
+  color: var(--ink);
+  border-bottom-color: var(--rule-strong);
+}
+
+/* Not a total — an instruction. Carries the accent that marks the fastest
+   strategy, because it is the same decision. */
+.load__breakdown dt.is-action,
+.load__breakdown dd.is-action {
+  font-weight: 600;
+  color: var(--best-ink);
+  border-bottom-color: var(--rule-strong);
+}
+
+/* --------------------------------------------------------------------------
+   Strategy tabulation
+   -------------------------------------------------------------------------- */
+
+.tablewrap { overflow-x: auto; }
+
+.tab {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.tab thead th {
+  padding: 0 var(--s2) var(--s2);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--rule-strong);
+}
+
+.tab thead .tab__n { text-align: right; }
+.tab__flagcol { width: 4px; padding: 0 !important; }
+
+.tab tbody tr { border-bottom: 1px solid var(--rule); }
+.tab tbody tr:nth-child(even) { background: var(--row-alt); }
+
+.tab td {
+  padding: var(--s3) var(--s2);
+  color: var(--ink-mid);
+  white-space: nowrap;
+}
+
+/* Ruled columns. OWN-WORLD's first structural noun, and this tabulation is
+   the element the thesis is named after — whitespace alone was not it. */
+.tab thead th + th,
+.tab tbody td + td { border-left: 1px solid var(--rule); }
+
+.tab tbody td.tab__stops,
+.tab thead th.tab__stops { border-left: 0; }
+
+.tab td.tab__n {
+  text-align: right;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.tab td.tab__stops {
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--ink);
+}
+
+/* The flag rail — status is a colour AND a word, never colour alone.
+   Scoped to .flagbar so the visually-hidden status text beside it keeps
+   its own 1px box instead of inheriting this one. */
+.tab .flagcell { padding: 0; width: 4px; }
+.tab .flagcell .flagbar { display: block; width: 4px; height: 100%; min-height: 40px; }
+
+.row--best .flagcell .flagbar { background: var(--best); }
+.row--ok   .flagcell .flagbar { background: var(--ok); }
+.row--bad  .flagcell .flagbar { background: var(--warn); }
+
+.row--best td.tab__stops { color: var(--best-ink); }
+.row--best td.tab__n { color: var(--best-ink); }
+
+.row--bad td, .row--bad td.tab__n { color: var(--warn-ink); }
+.row--bad .tab__over { text-decoration: line-through; text-decoration-color: var(--warn); }
+
+.tag {
+  display: inline-block;
+  margin-left: var(--s2);
+  padding: 1px 6px;
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+
+.tag--best { background: var(--best); color: #fff; }
+.tag--bad  { background: var(--warn); color: #1a1400; }
+
+/* Signature interaction: a new fastest strategy takes the flag the way a
+   timing screen announces a session best — one flash, then settled.
+   A low-alpha wash, not a solid fill: the figures must stay readable during
+   the one moment the design stages as its announcement. */
+@keyframes session-best {
+  0%   { background-color: rgba(124, 77, 214, 0.30); }
+  100% { background-color: transparent; }
+}
+
+.row--flash td { animation: session-best 620ms ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .row--flash td { animation: none; }
+  * { transition: none !important; }
+}
+
+.tab__note {
+  margin-top: var(--s4);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-dim);
+  max-width: 60ch;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s4);
+  margin-top: var(--s4);
+  padding-top: var(--s3);
+  border-top: 1px solid var(--rule);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.legend li { display: flex; align-items: center; gap: var(--s2); }
+
+.flag { display: block; width: 3px; height: 12px; }
+.flag--best { background: var(--best); }
+.flag--ok   { background: var(--ok); }
+.flag--bad  { background: var(--warn); }
+
+/* --------------------------------------------------------------------------
+   Saved setups and sharing
+   -------------------------------------------------------------------------- */
+
+.save { display: flex; flex-direction: column; gap: var(--s4); }
+.save__row { display: flex; gap: var(--s2); }
+
+#presetName, #shareUrl {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: var(--ground);
+  border: 1px solid var(--rule-strong);
+  padding: var(--s3);
+  color: var(--ink);
+  /* 16px, not 14: iOS Safari zooms the viewport on focus for anything
+     smaller, which throws the layout off mid-entry. */
+  font: 400 16px/1.2 var(--sans);
+}
+
+#shareUrl {
+  font-family: var(--mono);
+  color: var(--ink-mid);
+}
+
+#presetName::placeholder { color: var(--ink-dim); }
+#presetName:focus, #shareUrl:focus { outline: none; border-color: var(--best); }
+
+.btn {
+  flex: 0 0 auto;
+  background: transparent;
+  border: 1px solid var(--rule-strong);
+  padding: var(--s3) var(--s4);
+  color: var(--ink);
+  font: 600 11px/1.2 var(--sans);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 120ms linear, border-color 120ms linear;
+}
+
+.btn:hover { background: var(--row-alt); border-color: var(--ink-dim); }
+.btn:active { background: var(--rule); }
+.btn--wide { flex: 1 1 auto; }
+
+.presets { display: flex; flex-direction: column; gap: 1px; }
+
+.presets li {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  background: var(--row-alt);
+  padding: var(--s2) var(--s2) var(--s2) var(--s3);
+}
+
+.presets__load {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  padding: var(--s2) 0;
+  color: var(--ink);
+  font: 500 13px/1.3 var(--sans);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.presets__load:hover { color: var(--best-ink); }
+
+.presets__del {
+  flex: 0 0 auto;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: var(--s1) var(--s2);
+  color: var(--ink-dim);
+  font: 600 11px/1 var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.presets__del:hover { color: var(--warn-ink); border-color: var(--rule-strong); }
+
+.presets__empty {
+  padding: var(--s3) 0;
+  font-size: 12px;
+  color: var(--ink-dim);
+}
+
+/* --------------------------------------------------------------------------
+   Footer
+   -------------------------------------------------------------------------- */
+
+.foot {
+  padding: var(--s6) var(--s4) var(--s7);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--ink-dim);
+}
+
+/* The measure belongs to the paragraphs; the footer itself stays aligned to
+   the shell so it does not float away from the columns above it. */
+.foot p { max-width: 70ch; }
+.foot p + p { margin-top: var(--s2); }
+.foot em { color: var(--ink-mid); font-style: normal; text-decoration: underline; text-underline-offset: 2px; }
+.foot__meta { color: var(--ink-dim); }
+
+/* --------------------------------------------------------------------------
+   Phones — the strip goes to two courses, the tabulation becomes stacked
+   cards. A nine-column table cannot be read at 390px, and a horizontal
+   scrollbar is not a reading experience.
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 639px) {
+
+  .strip { flex-wrap: wrap; gap: var(--s2) 0; }
+
+  .strip__mark {
+    flex: 1 1 100%;
+    flex-direction: row;
+    align-items: baseline;
+    gap: var(--s3);
+  }
+
+  /* The readouts row already carries lap time and fuel per lap, so the
+     session line would only repeat itself into an ellipsis. */
+  .strip__session { display: none; }
+
+  .strip__readouts { flex: 1 1 100%; justify-content: space-between; }
+
+  .readout {
+    align-items: flex-start;
+    padding: 0;
+    border-left: 0;
+  }
+
+  .readout--lead { align-items: flex-end; }
+  .readout--lead dd { font-size: 22px; }
+
+  /* Tabulation -> one card per strategy, flag rail down the left edge. */
+  .tablewrap { overflow-x: visible; }
+
+  .tab thead {
+    position: absolute; width: 1px; height: 1px;
+    margin: -1px; overflow: hidden; clip-path: inset(50%);
+  }
+
+  .tab, .tab tbody, .tab tr { display: block; width: 100%; }
+
+  .tab tbody tr {
+    position: relative;
+    padding: var(--s3) 0 var(--s3) var(--s4);
+    border-bottom: 1px solid var(--rule-strong);
+  }
+
+  .tab tbody tr:last-child { border-bottom: 0; }
+
+  /* Stacked cards have no columns to rule. */
+  .tab tbody td + td { border-left: 0; }
+
+  .tab td {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--s4);
+    padding: 3px 0;
+    white-space: normal;
+  }
+
+  .tab td::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+  }
+
+  .tab td.tab__n { text-align: right; }
+
+  .tab td.tab__stops {
+    font-size: 17px;
+    justify-content: flex-end;
+    gap: var(--s3);
+    padding-bottom: var(--s2);
+    margin-bottom: var(--s2);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  /* Label left, count and tag grouped together on the right. */
+  .tab td.tab__stops::before { margin-right: auto; }
+
+  .tab .flagcell {
+    position: absolute;
+    left: 0;
+    top: var(--s3);
+    bottom: var(--s3);
+    width: 4px;
+    padding: 0;
+  }
+
+  .tab .flagcell::before { content: none; }
+  .tab .flagcell .flagbar { height: 100%; min-height: 0; }
+}
+
+/* --------------------------------------------------------------------------
+   Wider screens — the tabulation gets room, the entry grid gets columns
+   -------------------------------------------------------------------------- */
+
+@media (min-width: 640px) {
+  .grid { grid-template-columns: 1fr 1fr; }
+  .panel { padding: var(--s5) var(--s5) var(--s6); }
+  .strip { padding-inline: calc(max(0px, (100% - var(--shell)) / 2) + var(--s5)); }
+  .foot { padding-left: var(--s5); padding-right: var(--s5); }
+  .readout { padding: 0 var(--s4); }
+  .readout--lead dd { font-size: 28px; }
+  .load__value { font-size: 80px; }
+  .tab td { padding: var(--s3); }
+  .tab thead th { padding: 0 var(--s3) var(--s2); }
+}
+
+@media (min-width: 1000px) {
+  main {
+    display: grid;
+    grid-template-columns: minmax(360px, 4fr) 6fr;
+  }
+  .panel { padding: var(--s5) var(--s6) var(--s6); }
+  .grid { grid-template-columns: 1fr 1fr; }
+  .strip { padding-inline: calc(max(0px, (100% - var(--shell)) / 2) + var(--s6)); }
+  .foot { padding-left: var(--s6); padding-right: var(--s6); }
+
+  /* Entry and saved setups hold the left rail; the answer and the
+     tabulation hold the right, so neither column strands a dead region. */
+  .panel:nth-of-type(1) { grid-column: 1; grid-row: 1; }
+  .panel:nth-of-type(2) { grid-column: 2; grid-row: 1; }
+  .panel:nth-of-type(3) { grid-column: 2; grid-row: 2; }
+  .panel:nth-of-type(4) { grid-column: 1; grid-row: 2; }
+
+  .load__value { font-size: 96px; }
+}
+
+@media (min-width: 1400px) {
+  main { grid-template-columns: minmax(420px, 4fr) 7fr; }
+}
