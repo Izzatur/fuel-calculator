@@ -28,7 +28,8 @@ STORY: A racer transcribes numbers off a practice run and leaves with a fuel
 load and a stop plan, in English or Bahasa Melayu.
 
 FIRST VIEWPORT: Sticky session strip carrying RACE LAPS, FUEL/LAP and LOAD.
-Entry grid beneath it. Strategy tabulation below, fastest row flagged purple,
+Entry grid beneath it — race format, lap time, fuel, tank, optional stint
+limit, pit loss. Strategy tabulation below, fastest row flagged purple,
 non-viable rows struck amber.
 
 SIGNATURE INTERACTION: When the fastest viable strategy changes, that row
@@ -155,6 +156,17 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
         </div>
 
         <div class="cell">
+          <label class="field__label" for="stintMin" data-i18n="entry.stint">Stint limit</label>
+          <div class="inputs">
+            <span class="unitbox">
+              <input class="num" type="text" inputmode="numeric" id="stintMin" value="" placeholder="—" autocomplete="off">
+              <span class="unit" data-i18n="unit.min">min</span>
+            </span>
+          </div>
+          <p class="hint" data-i18n="entry.stintHint">Optional. The longest you may run before stopping — a regulation, a driver swap, or your own plan. Blank means the tank is the only limit.</p>
+        </div>
+
+        <div class="cell">
           <label class="field__label" for="pitLoss" data-i18n="entry.pitLoss">Pit stop loss</label>
           <div class="inputs">
             <span class="unitbox">
@@ -198,6 +210,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
             <th scope="col" class="tab__stops" data-i18n="strat.stops">Stops</th>
             <th scope="col" data-i18n="strat.stints">Stints</th>
             <th scope="col" class="tab__n" data-i18n="strat.lapsPerStint">Laps / stint</th>
+            <th scope="col" class="tab__n" data-i18n="strat.stintTime">Stint time</th>
             <th scope="col" class="tab__n" data-i18n="strat.startLoad">Start load</th>
             <th scope="col" class="tab__n" data-i18n="strat.fuelPerStint">Fuel / stint</th>
             <th scope="col" class="tab__n" data-i18n="strat.totalFuel">Total fuel</th>
@@ -212,7 +225,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
     <ul class="legend">
       <li><span class="flag flag--best" aria-hidden="true"></span> <span data-i18n="strat.fastestViable">Fastest viable</span></li>
       <li><span class="flag flag--ok" aria-hidden="true"></span> <span data-i18n="strat.viable">Viable</span></li>
-      <li><span class="flag flag--bad" aria-hidden="true"></span> <span data-i18n="strat.exceedsTank">Exceeds tank</span></li>
+      <li><span class="flag flag--bad" aria-hidden="true"></span> <span data-i18n="strat.overLimit">Over a limit</span></li>
     </ul>
   </section>
 

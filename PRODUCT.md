@@ -42,12 +42,15 @@ Confirmed for v1:
 - Lap time entered as a total over N laps; average derived. N defaults to 1.
 - Fuel entered as a total over N laps; per-lap derived. N defaults to 1.
 - Tank capacity, and pit stop time loss in seconds.
-- Outputs: race laps, minimum fuel, recommended fuel load, and a strategy list across stop counts with laps, fuel per stint, starting load, total fuel, and estimated race time.
-- Non-viable strategies (a stint exceeding tank capacity) are shown as non-viable, not hidden and not rendered as impossible numbers.
+- **Optional stint limit in minutes**, for racers who arrive with the stint already decided.
+- Outputs: race laps, minimum fuel, recommended fuel load, and a strategy list across stop counts with laps, stint time, fuel per stint, starting load, total fuel, and estimated race time.
+- Non-viable strategies (a stint exceeding tank capacity or the stint limit) are shown as non-viable, not hidden and not rendered as impossible numbers. The flag names which limit was broken.
 - Inputs encode into the URL so a plan can be bookmarked or sent.
 - Named setups persist in `localStorage`.
 
 Fuel margin is fixed, not user-configurable: one formation lap plus one spare lap, stated in the interface wherever the recommended figure appears. The user declined a margin control; the reasoning recorded is that an unexplained buffer gets overridden blindly, so the tool states its assumption rather than delegating it.
+
+The stint limit is a **maximum**, not a target: it rules out any strategy whose longest stint would run past it, and the balanced split then keeps every stint inside it. It is stated in minutes, because that is how a regulation or a driver-swap window reads, and enforced in laps at the same average lap the rest of the page uses — the interface states the cap in both currencies so a plan that stops a lap "early" does not read as a fault. Either limit is sufficient on its own: a stint limit with no tank capacity still ranks strategies, and vice versa.
 
 Units are **litres only**. Gallons and kilograms were considered and declined.
 

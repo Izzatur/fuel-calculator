@@ -22,7 +22,7 @@
     ['raceH', 'rh'], ['raceM', 'rm'], ['raceLapsIn', 'rl'],
     ['lapM', 'lm'], ['lapS', 'ls'], ['lapN', 'ln'],
     ['fuelUsed', 'fu'], ['fuelN', 'fn'],
-    ['tank', 'tk'], ['pitLoss', 'pt']
+    ['tank', 'tk'], ['stintMin', 'sm'], ['pitLoss', 'pt']
   ];
 
   var $ = function (id) { return document.getElementById(id); };
@@ -136,8 +136,10 @@
     var basis = t('load.basis', { laps: r.raceLaps, lapWord: lapWord(r.raceLaps) }) +
       ' ' + (r.byTime ? t('load.basisTimed') : t('load.basisFixed'));
 
+    /* Without a tank figure the split is the stint limit's doing, so the
+       sentence must not blame a capacity the racer never gave. */
     if (best && best.stops > 0) {
-      basis = t('load.multiStint', {
+      basis = t(r.hasTank ? 'load.multiStint' : 'load.multiStintNoTank', {
         stints: best.stints,
         tank: C.fmtL(r.tank, 1),
         start: C.fmtL(best.startFuel, 1)
@@ -209,6 +211,12 @@
     }
 
     if (r.hasTank) pair(t('load.tank'), C.fmtL(r.tank, 1) + L);
+
+    if (r.hasStint) {
+      pair(t('load.stintLimit'),
+        r.stintMinutes + NB + t('unit.min') + '  ·  ' +
+        r.stintLapCap + NB + lapWord(r.stintLapCap));
+    }
   }
 
   /* One debounced sentence, so a screen reader is not re-read the whole
@@ -235,7 +243,8 @@
     var body = $('stratBody');
     var note = $('stratNote');
 
-    if (!r.hasTank) {
+    /* Either limit on its own is enough to rank strategies. */
+    if (!r.hasTank && !r.hasStint) {
       body.innerHTML = '';
       note.textContent = t('strat.needTank');
       lastBestStops = null;
@@ -251,12 +260,23 @@
     }
 
     if (s.firstViable < 0) {
+      var worst = s.all[s.all.length - 1];
       body.innerHTML = '';
-      note.textContent = t('strat.noneFit', {
-        tank: C.fmtL(r.tank, 1),
-        n: s.all.length,
-        max: C.fmtL(s.all[s.all.length - 1].maxStint, 1)
-      });
+      /* With a stint limit in play the tank may not be what is blocking, so
+         the message reports the longest stint in both currencies. */
+      note.textContent = r.hasStint
+        ? t('strat.noneFitLimits', {
+            n: s.all.length,
+            laps: worst.maxLaps,
+            lapWord: lapWord(worst.maxLaps),
+            time: C.fmtClock(worst.stintTime),
+            max: C.fmtL(worst.maxStint, 1)
+          })
+        : t('strat.noneFit', {
+            tank: C.fmtL(r.tank, 1),
+            n: s.all.length,
+            max: C.fmtL(worst.maxStint, 1)
+          });
       lastBestStops = null;
       return;
     }
@@ -265,7 +285,7 @@
     var changed = booted && lastBestStops !== null && lastBestStops !== newBest;
 
     /* data-label drives the stacked card layout under 640px, where a
-       nine-column tabulation cannot be read on a phone. */
+       ten-column tabulation cannot be read on a phone. */
     body.innerHTML = s.shown.map(function (row) {
       var cls = row.best ? 'row--best' : (row.viable ? 'row--ok' : 'row--bad');
       if (row.best && changed) cls += ' row--flash';
@@ -277,20 +297,32 @@
             ? C.fmtL(row.maxStint, 1)
             : C.fmtL(row.minStint, 1) + '–' + C.fmtL(row.maxStint, 1));
 
+      /* Which limit a row breaks is the useful part, so the tag and the
+         hidden status name it rather than reading "not viable". */
+      var breaks = !row.fitsTank ? t('strat.overTank')
+        : (!row.fitsStint ? t('strat.overStint') : '');
+
       var tag = row.best
         ? '<span class="tag tag--best">' + esc(t('strat.fastest')) + '</span>'
-        : (!row.viable ? '<span class="tag tag--bad">' + esc(t('strat.overTank')) + '</span>' : '');
+        : (breaks ? '<span class="tag tag--bad">' + esc(breaks) + '</span>' : '');
 
-      var status = row.best ? t('strat.fastestViable') : (row.viable ? t('strat.viable') : t('strat.exceedsTank'));
-      var over = row.viable ? '' : ' tab__over';
+      var status = row.best ? t('strat.fastestViable')
+        : (row.viable ? t('strat.viable')
+          : (!row.fitsTank ? t('strat.exceedsTank') : t('strat.exceedsStint')));
+
+      /* Strike the figures that overran, not the whole row: the litres are
+         wrong for the tank, the minutes are wrong for the stint limit. */
+      var overFuel = row.fitsTank ? '' : ' tab__over';
+      var overTime = row.fitsStint ? '' : ' tab__over';
 
       return '<tr class="' + cls + '">' +
         '<td class="flagcell"><span class="flagbar"></span><span class="vh">' + esc(status) + '</span></td>' +
         '<td class="tab__stops" data-label="' + esc(t('strat.stops')) + '">' + row.stops + tag + '</td>' +
         '<td data-label="' + esc(t('strat.stints')) + '">' + row.stints + '</td>' +
-        '<td class="tab__n" data-label="' + esc(t('strat.lapsPerStint')) + '">' + esc(stintLaps) + '</td>' +
-        '<td class="tab__n' + over + '" data-label="' + esc(t('strat.startLoad')) + '">' + C.fmtL(row.startFuel, 1) + '</td>' +
-        '<td class="tab__n' + over + '" data-label="' + esc(t('strat.fuelPerStint')) + '">' + esc(stintFuel) + '</td>' +
+        '<td class="tab__n' + overTime + '" data-label="' + esc(t('strat.lapsPerStint')) + '">' + esc(stintLaps) + '</td>' +
+        '<td class="tab__n' + overTime + '" data-label="' + esc(t('strat.stintTime')) + '">' + C.fmtClock(row.stintTime) + '</td>' +
+        '<td class="tab__n' + overFuel + '" data-label="' + esc(t('strat.startLoad')) + '">' + C.fmtL(row.startFuel, 1) + '</td>' +
+        '<td class="tab__n' + overFuel + '" data-label="' + esc(t('strat.fuelPerStint')) + '">' + esc(stintFuel) + '</td>' +
         '<td class="tab__n" data-label="' + esc(t('strat.totalFuel')) + '">' + C.fmtL(row.totalFuel, 1) + '</td>' +
         '<td class="tab__n" data-label="' + esc(t('strat.raceTime')) + '">' + C.fmtClock(row.raceTime) + '</td>' +
         '<td class="tab__n" data-label="' + esc(t('strat.delta')) + '">' + (row.best ? '—' : C.fmtDelta(row.delta)) + '</td>' +
@@ -307,13 +339,36 @@
     lastBestStops = newBest;
 
     var parts = [];
-    parts.push(s.best.stops === 0
-      ? t('strat.oneStint', { tank: C.fmtL(r.tank, 1) })
-      : t('strat.fewest', {
-          stops: s.best.stops,
-          stopWord: stopWord(s.best.stops),
-          tank: C.fmtL(r.tank, 1)
-        }));
+    if (s.best.stops === 0) {
+      parts.push(r.hasTank
+        ? t('strat.oneStint', { tank: C.fmtL(r.tank, 1) })
+        : t('strat.oneStintFree'));
+    } else {
+      /* Credit the limit that actually forced the stop. The row directly
+         above the fastest viable one is the plan that was ruled out, and
+         what it broke is why the racer is stopping at all — saying "the
+         tank" when the tank had room to spare would be a lie. */
+      var blocked = s.all[s.firstViable - 1];
+      var key = !blocked.fitsTank
+        ? (!blocked.fitsStint ? 'strat.fewestBoth' : 'strat.fewest')
+        : 'strat.fewestStint';
+      parts.push(t(key, {
+        stops: s.best.stops,
+        stopWord: stopWord(s.best.stops),
+        tank: C.fmtL(r.tank, 1),
+        min: r.stintMinutes
+      }));
+    }
+    /* The limit is stated in minutes but enforced in laps — say both, or a
+       plan that stops one lap "early" looks like an error. */
+    if (r.hasStint) {
+      parts.push(t('strat.stintCap', {
+        min: r.stintMinutes,
+        laps: r.stintLapCap,
+        lapWord: lapWord(r.stintLapCap),
+        lap: C.fmtLap(r.avgLap)
+      }));
+    }
     parts.push(t('strat.assumption', { pit: r.pitLoss }));
     if (s.truncatedLow) parts.push(t('strat.truncated'));
     note.textContent = parts.join(' ');
@@ -368,9 +423,19 @@
     if (!p.toString()) return false;
     if (p.get('md') === 'l') fmtLapsRadio.checked = true;
     else if (p.get('md') === 't') fmtTimeRadio.checked = true;
+
+    /* toQuery always writes `md` and omits empty fields, so a query carrying
+       it is a complete state: an absent field means blank, not unchanged.
+       Without this, loading a setup saved with no stint limit would leave a
+       limit already typed in the box. A hand-made partial link has no `md`
+       and still only fills in what it names. */
+    var whole = p.get('md') !== null;
+
     FIELDS.forEach(function (f) {
+      if (!els[f[0]]) return;
       var v = p.get(f[1]);
-      if (v !== null && els[f[0]]) els[f[0]].value = v;
+      if (v !== null) els[f[0]].value = v;
+      else if (whole) els[f[0]].value = '';
     });
     syncFormat();
     return true;

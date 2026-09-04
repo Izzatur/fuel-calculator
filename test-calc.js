@@ -159,6 +159,58 @@ ok('no stint is ever more than one lap longer than another', (function () {
 eq('more stints than laps is refused', C.planStints(3, 4, 1), null);
 
 /* ------------------------------------------------------------------ */
+group('Stint limit — the cap a racer already has to meet');
+
+var noLimit = C.compute(withInput({})).strategies;
+eq('no stint limit leaves the no-stop run fastest', noLimit.best.stops, 0);
+
+var cap40 = C.compute(withInput({ stintMin: '40' }));
+eq('40 min of 2:00 laps is exactly 20 laps, not 19', cap40.stintLapCap, 20);
+eq('the limit is reported back for the interface to state', cap40.stintMinutes, 40);
+eq('31 laps cannot be one 20-lap stint -> 1 stop', cap40.strategies.best.stops, 1);
+eq('the ruled-out row still fits the tank', cap40.strategies.all[0].fitsTank, true);
+eq('it is the stint that rules it out', cap40.strategies.all[0].fitsStint, false);
+eq('so it is not viable', cap40.strategies.all[0].viable, false);
+
+var cap30 = C.compute(withInput({ stintMin: '30' }));
+eq('30 min of 2:00 laps is 15 laps', cap30.stintLapCap, 15);
+/* A 2-stint split is 16/15, and that 16-lap stint runs 32 min. */
+eq('a 16/15 split breaks a 15-lap cap -> 2 stops', cap30.strategies.best.stops, 2);
+ok('every stint in the chosen plan is inside the cap',
+  cap30.strategies.best.laps.every(function (l) { return l <= 15; }));
+
+near('stint time is the longest stint at the average lap',
+  cap40.strategies.all[1].stintTime, 16 * 120, 1e-9);
+
+near('a stint limit never changes the total fuel',
+  cap30.strategies.best.totalFuel, noLimit.best.totalFuel, 1e-9);
+
+eq('a cap shorter than one lap is refused',
+  C.compute(withInput({ stintMin: '1' })).error, 'err.stintTooShort');
+eq('the too-short error carries the lap time',
+  C.compute(withInput({ stintMin: '1' })).errorVars.lap, '2:00.0');
+
+eq('blank stint limit sets no cap',
+  C.compute(withInput({ stintMin: '' })).stintLapCap, null);
+eq('zero stint limit sets no cap',
+  C.compute(withInput({ stintMin: '0' })).stintLapCap, null);
+eq('negative stint limit sets no cap',
+  C.compute(withInput({ stintMin: '-10' })).stintLapCap, null);
+
+/* A stint limit on its own is enough to rank strategies. */
+var stintOnly = C.compute(withInput({ tank: '', stintMin: '40' }));
+ok('a stint limit with no tank still produces strategies', !!stintOnly.strategies);
+eq('with no tank stated, no row is ruled out by the tank',
+  stintOnly.strategies.all[0].fitsTank, true);
+eq('a 20-lap cap over 31 laps still forces a stop', stintOnly.strategies.best.stops, 1);
+
+/* Both limits stated: whichever binds harder decides. */
+var both = C.compute(withInput({ tank: '60', stintMin: '40' }));
+eq('a 60 L tank binds harder than a 40 min cap here', both.strategies.best.stops, 1);
+ok('the chosen plan clears both limits',
+  both.strategies.best.fitsTank && both.strategies.best.fitsStint);
+
+/* ------------------------------------------------------------------ */
 group('Guards — nothing unfinished reaches the screen');
 
 eq('errors are i18n keys, not sentences',

@@ -8,8 +8,12 @@ has to hand. What you have after a practice run is a total: *"12.4 litres over
 lap time, and does the division itself.
 
 It also treats pit strategy as a comparison rather than a verdict: every stop
-count is laid out side by side with the laps and fuel for each stint, and the
-ones your tank cannot support are marked as such instead of hidden.
+count is laid out side by side with the laps, time and fuel for each stint, and
+the ones your tank cannot support are marked as such instead of hidden.
+
+If you already have a **stint requirement** — a regulation, a driver-swap
+window, or simply how long you want to stay in the car — enter it in minutes
+and the whole plan is worked out around it.
 
 Available in **English and Bahasa Melayu** — toggle at the top left. Your
 choice is remembered, and it travels in the share link.
@@ -22,6 +26,7 @@ choice is remembered, and it travels in the share link.
 | Lap time | Minutes and seconds, **over any number of laps** |
 | Fuel used | Litres, **over any number of laps** |
 | Tank capacity | Litres |
+| Stint limit | **Optional.** Minutes — the longest a single stint may run |
 | Pit stop loss | Seconds lost per stop, entry to exit |
 
 The "over N laps" field defaults to 1, so a per-lap figure still works exactly
@@ -57,6 +62,24 @@ can see is a buffer people override blindly.
 the last carries the spare lap. A strategy is viable when no single stint
 exceeds tank capacity.
 
+**Stint limit.** Optional, and stated in minutes because that is how the rule
+usually reads. It is enforced in laps, using the same average lap as
+everything else:
+
+```
+stintLapCap = floor(stintSeconds / averageLap)
+```
+
+A strategy is viable when its longest stint clears *every* limit you stated —
+so a 40-minute cap on 2:00 laps allows 20 laps, and a plan whose longest stint
+is 21 laps is ruled out even if the tank could hold the fuel. The page states
+the cap in both currencies (`40 min · 20 laps`), because a plan that stops a
+lap "early" otherwise reads as a bug.
+
+Either limit works on its own: a stint limit with no tank capacity still
+produces a strategy table, and vice versa. Stint time is measured over race
+laps only — the formation lap is fuelled for, not timed.
+
 **Race time.**
 
 ```
@@ -89,12 +112,12 @@ or serve the folder with anything.
 The calculation core in `calc.js` is pure and has no DOM dependency:
 
 ```
-node test-calc.js    # 62 checks
+node test-calc.js    # 84 checks
 node test-i18n.js    # 25 checks
 ```
 
 `test-calc.js` covers the timed-lap rule, the "over N laps" equivalence, stint
-balancing, tank viability, and input guards (blank, zero, negative, and
+balancing, tank and stint-limit viability, and input guards (blank, zero, negative, and
 non-numeric entry must never produce `NaN`, `Infinity`, or a negative load).
 
 `test-i18n.js` covers the translations: every English key has a Malay
@@ -131,7 +154,8 @@ best / valid / warning* to anyone who watches motorsport. Strategy viability
 inherits that reading rather than inventing a new one.
 
 Colour is never the sole carrier of state: every flagged row also carries a
-word, and figures that exceed the tank are struck through as well as flagged.
+word naming the limit it breaks, and the figures that overran are struck
+through as well as flagged — litres for the tank, minutes for the stint.
 
 Every figure is set in **Martian Mono**, self-hosted at three weights (~30 KB
 total, no network request). The page's focal element is a 96px number, and

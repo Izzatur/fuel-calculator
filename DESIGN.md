@@ -234,9 +234,9 @@ components:
 
 This is the live timing tabulation a racer already reads mid-session, holding a fuel plan instead of a field of cars. Everything about it is borrowed from a surface built to be scanned under time pressure by someone whose attention is mostly elsewhere: a near-black charcoal ground, columns separated by hairline rules rather than air, uppercase letterspaced column heads, and every single figure set in one tabular monospace so that a value updating on keystroke never nudges the column beside it. It is dense on purpose. Density is not a compromise here; it is what a timing screen is.
 
-The register is instrument, not dashboard. The category this product sits in ships neon telemetry — glowing gauges, gradient meters, glassy cards — and this build refuses all of it. Every fill is a single flat ink. There is no shadow, no gradient, no glass, no glow, and no rounded corner anywhere in the stylesheet. Depth is carried entirely by two devices: a one-pixel rule, and a four-value step of near-black tint between ground, panel and alternating row. The only three saturated colours in the system — purple, green, amber — never appear as decoration. They are the timing vocabulary: fastest viable, viable, exceeds tank. If a surface wants colour for its own sake, this system has none to give it.
+The register is instrument, not dashboard. The category this product sits in ships neon telemetry — glowing gauges, gradient meters, glassy cards — and this build refuses all of it. Every fill is a single flat ink. There is no shadow, no gradient, no glass, no glow, and no rounded corner anywhere in the stylesheet. Depth is carried entirely by two devices: a one-pixel rule, and a four-value step of near-black tint between ground, panel and alternating row. The only three saturated colours in the system — purple, green, amber — never appear as decoration. They are the timing vocabulary: fastest viable, viable, over a limit. If a surface wants colour for its own sake, this system has none to give it.
 
-The counterweight to all that density is a single enormous figure. The recommended fuel load renders at 96px in Martian Mono 600 in the accent purple, and it is the only element on the page allowed that scale. A racer glancing over from a running rig gets the answer from across the room; everything else — the basis sentence, the six-row breakdown, the nine-column strategy tabulation — is there for the driver who leans in. The sticky session strip guarantees that the answer never scrolls away, and at 1920 it runs full-bleed edge to edge while its contents stay locked to the same 1600px shell the columns below it use.
+The counterweight to all that density is a single enormous figure. The recommended fuel load renders at 96px in Martian Mono 600 in the accent purple, and it is the only element on the page allowed that scale. A racer glancing over from a running rig gets the answer from across the room; everything else — the basis sentence, the six-row breakdown, the ten-column strategy tabulation — is there for the driver who leans in. The sticky session strip guarantees that the answer never scrolls away, and at 1920 it runs full-bleed edge to edge while its contents stay locked to the same 1600px shell the columns below it use.
 
 **Key Characteristics:**
 - Charcoal ground (#14171A) with panels one tint step up; a dark-only surface, declared via `color-scheme: dark`
@@ -258,19 +258,19 @@ A near-black charcoal ground stepped through four barely-separated tints, lit by
 
 ### Secondary
 
-- **Viable Green** (`{colors.ok}`): The flag rail on any strategy the tank supports, and the underline on a focused "over N laps" field.
+- **Viable Green** (`{colors.ok}`): The flag rail on any strategy that clears every limit the racer stated — tank capacity, an optional stint limit, or both — and the underline on a focused "over N laps" field.
 - **Viable Green Ink** (`{colors.ok-ink}`): The derived per-lap figures under the entry grid, and the "over N laps" lap-count value — the numbers the product computes *for* you rather than the ones you typed. This is the one place the green carries meaning outside the strategy table, and the meaning is the same: this figure is sound.
 
 ### Tertiary
 
-- **Exceeds-Tank Amber** (`{colors.warn}`): The flag rail and `Over tank` tag on a strategy whose stint will not fit the tank, and the strike-through line laid across its impossible figures.
+- **Over-Limit Amber** (`{colors.warn}`): The flag rail and the `Over tank` or `Over stint` tag on a strategy that breaks a stated limit, and the strike-through line laid across the figures that overran — litres when the tank is the problem, laps and stint time when the stint limit is.
 - **Exceeds-Tank Amber Ink** (`{colors.warn-ink}`): Amber text — the whole non-viable row, the error state of the derived line, and the delete control on hover.
 
 ### Neutral
 
 - **Charcoal Ground** (`{colors.ground}`): The page beneath everything, the text-field well, and the ink colour on the one inverted surface (the selected segment of the race-format control). Also the `theme-color`.
 - **Panel Charcoal** (`{colors.panel}`): Every panel, every grid cell, every table row at rest, and the strip. One tint step up from ground.
-- **Alternating Row** (`{colors.row-alt}`): Even rows of the strategy tabulation, saved-setup rows, and the button hover fill. A second tint step, just enough to track a row across nine columns.
+- **Alternating Row** (`{colors.row-alt}`): Even rows of the strategy tabulation, saved-setup rows, and the button hover fill. A second tint step, just enough to track a row across ten columns.
 - **Hairline Rule** (`{colors.rule}`): The default separator between peers — column dividers, row bottoms, breakdown rows, grid gaps, the legend's top rule. Also the button's active-state fill.
 - **Strong Rule** (`{colors.rule-strong}`): The heavier separator that closes a section or bounds a control — under a panel head, under a table head, around the segmented control and text fields, the input underline at rest, the total row's bottom edge, the scrollbar thumb.
 - **Ink** (`{colors.ink}`): Primary reading text and every entered or tabulated figure.
@@ -280,9 +280,9 @@ A near-black charcoal ground stepped through four barely-separated tints, lit by
 
 ### Named Rules
 
-**The Timing Vocabulary Rule.** Purple, green and amber report viability and nothing else. Purple is *fastest viable*, green is *viable*, amber is *exceeds tank*. They are never used for branding, emphasis, hierarchy, category, or delight. A new surface that wants an accent colour does not get one — it gets a tint step or a rule weight.
+**The Timing Vocabulary Rule.** Purple, green and amber report viability and nothing else. Purple is *fastest viable*, green is *viable*, amber is *over a stated limit*. They are never used for branding, emphasis, hierarchy, category, or delight. A new surface that wants an accent colour does not get one — it gets a tint step or a rule weight.
 
-**The Never Colour Alone Rule.** Every status colour ships with a word. The purple rail carries a `Fastest` tag, the amber rail carries `Over tank`, both carry visually-hidden status text for screen readers, the legend spells all three out, and a figure that exceeds the tank is struck through as well as recoloured. Remove all colour from this page and every state is still readable. That is the test.
+**The Never Colour Alone Rule.** Every status colour ships with a word. The purple rail carries a `Fastest` tag, the amber rail carries `Over tank` or `Over stint` — naming the limit, not merely reporting failure — both carry visually-hidden status text for screen readers, the legend spells all three out, and every figure that overran is struck through as well as recoloured. Remove all colour from this page and every state is still readable. That is the test.
 
 **The Purple Belongs to the Answer Rule.** The accent marks the single decision the driver leaves with, and follows it wherever it appears: the 96px load, the `LOAD` readout, the fastest row, the `Start load (stint 1 of N)` line, the focus ring, the selection. It never marks a heading, a border, a brand mark, or a call to action.
 
@@ -309,7 +309,7 @@ A near-black charcoal ground stepped through four barely-separated tints, lit by
 
 **The One Mono Rule.** Martian Mono is self-hosted at all three weights and carries every figure on the page, including the 96px load. Delegating the display voice to whatever mono the OS happens to ship — Consolas, SF Mono, Liberation Mono — is three different designs. The fallback stack exists for the swap window, not as an accepted outcome.
 
-**The Figures Mono, Words Sans Rule.** A line that carries figures is set in the mono; a line that carries only words is set in the sans. This holds down to the exception that proves it: the `Fastest` and `Over tank` tags sit inside mono table cells and explicitly force the sans back on, because they are words.
+**The Figures Mono, Words Sans Rule.** A line that carries figures is set in the mono; a line that carries only words is set in the sans. This holds down to the exception that proves it: the `Fastest`, `Over tank` and `Over stint` tags sit inside mono table cells and explicitly force the sans back on, because they are words.
 
 **The No-Shift Rule.** Every numeric surface sets `tabular-nums` and `tnum`. Figures recompute on every keystroke, and a column that reflows while a driver is reading it has failed. Tightened by -0.01em to keep the wide mono from sprawling.
 
@@ -319,11 +319,11 @@ A near-black charcoal ground stepped through four barely-separated tints, lit by
 
 The shell is capped at **1600px** (`--shell`) and centred. Below 1000px the page is a single column of stacked panels; from 1000px it becomes a two-column grid at `minmax(360px, 4fr) 6fr`, widening to `minmax(420px, 4fr) 7fr` at 1400px. Panel placement is explicit rather than flow-ordered: session entry and saved setups hold the narrow left rail, fuel load and the strategy tabulation hold the wide right, so neither column strands a dead region when one side runs short.
 
-The entry grid is one column below 640px and two columns above it, with an odd last cell spanning the full width so no bare rule-coloured slot is left behind. Panel padding steps with the viewport: `24px 16px 32px` on phones, `24px 24px 32px` from 640px, `24px 32px 32px` from 1000px, and the sticky strip's inline padding tracks the same steps so its contents stay aligned to the columns beneath it.
+The entry grid is one column below 640px and two columns above it. Exactly one of the two race-format cells is hidden at a time, so six cells are always in play and the two-column grid always fills — no bare rule-coloured slot is left behind and no cell has to span to cover one. Panel padding steps with the viewport: `24px 16px 32px` on phones, `24px 24px 32px` from 640px, `24px 32px 32px` from 1000px, and the sticky strip's inline padding tracks the same steps so its contents stay aligned to the columns beneath it.
 
 Spacing runs on a seven-step 4px-based rhythm (4 / 8 / 12 / 16 / 24 / 32 / 48). Vertical rhythm inside a panel is dominated by 24px (head-to-content) and 16px (block-to-block); intra-control spacing is 8px and 12px.
 
-Below 640px two things change shape rather than merely reflowing. The strip breaks into **two courses** — mark on the first, the three readouts spread edge to edge on the second — and the redundant session line is dropped rather than ellipsised. The nine-column strategy tabulation becomes **one card per strategy**: the table head goes visually hidden, rows become blocks, and each cell prints its `data-label` as a left-hand caption with the value right-aligned opposite. The stop count promotes to 18px and takes a rule beneath it as the card's own head. A horizontal scrollbar was available and was refused.
+Below 640px two things change shape rather than merely reflowing. The strip breaks into **two courses** — mark on the first, the three readouts spread edge to edge on the second — and the redundant session line is dropped rather than ellipsised. The ten-column strategy tabulation becomes **one card per strategy**: the table head goes visually hidden, rows become blocks, and each cell prints its `data-label` as a left-hand caption with the value right-aligned opposite. The stop count promotes to 18px and takes a rule beneath it as the card's own head. A horizontal scrollbar was available and was refused.
 
 ### Named Rules
 
@@ -407,10 +407,10 @@ The page's one display element. A baseline-aligned pair: the value in 64/80/96px
 
 The element the whole direction is named after, and the system's signature.
 
-- **Structure:** a nine-column table, collapsed borders, 13px. Column heads in 11px uppercase 600 dim at 0.06em over a strong rule. Body rows carry a hairline bottom and an alternating tint on evens.
+- **Structure:** a ten-column table, collapsed borders, 13px. Column heads in 11px uppercase 600 dim at 0.06em over a strong rule. Body rows carry a hairline bottom and an alternating tint on evens.
 - **Ruled columns:** every cell takes a 1px left rule from its predecessor, except the leading stops column. Whitespace alone was explicitly not enough — the ruling is the point.
-- **Flag rail:** a 4px column at the far left, zero padding, filled purple (fastest viable), green (viable) or amber (exceeds tank), with visually-hidden status text beside it in its own box.
-- **Status coding:** the best row's stops and figures turn purple ink and take a `Fastest` tag; a non-viable row turns entirely amber ink, takes an `Over tank` tag, and has its start-load and fuel-per-stint figures struck through in amber.
+- **Flag rail:** a 4px column at the far left, zero padding, filled purple (fastest viable), green (viable) or amber (over a stated limit), with visually-hidden status text beside it in its own box.
+- **Status coding:** the best row's stops and figures turn purple ink and take a `Fastest` tag; a non-viable row turns entirely amber ink and takes an `Over tank` or `Over stint` tag naming the limit it breaks. The struck figures are the ones that actually overran — start load and fuel per stint for the tank, laps per stint and stint time for the stint limit — so a row that breaks both is struck in four places.
 - **Tags:** hard rectangles, 11px sans 700 uppercase at 0.04em, `1px 6px`, white on purple or near-black on amber, offset 8px from the figure.
 - **Legend:** always present beneath the note, above a hairline, spelling out all three states in 11px uppercase dim beside 3px × 12px flag chips.
 - **Mobile:** one card per strategy with the flag rail running the full card height down the left edge, `data-label` captions on the left of each row, values right, and the stop count promoted to 18px above its own rule.
@@ -439,7 +439,7 @@ Focus is a 2px solid purple-ink outline offset 2px, applied globally via `:focus
 - **Do** make a figure field an underline and a prose field a box.
 - **Do** step a tint or add a rule when a surface needs to read as distinct.
 - **Do** reserve the accent purple for the single decision the driver leaves with.
-- **Do** reshape at 640px rather than scrolling sideways — the nine-column tabulation becomes cards, the strip becomes two courses.
+- **Do** reshape at 640px rather than scrolling sideways — the ten-column tabulation becomes cards, the strip becomes two courses.
 - **Do** honour `prefers-reduced-motion` by removing both the session-best flash and every transition.
 
 ### Don't:

@@ -108,14 +108,22 @@
     };
   }
 
-  function enumerate(raceLaps, fuelPerLap, tank, avgLap, pitLoss) {
+  /* `tank` is null when the racer stated only a stint limit, `stintLapCap`
+     is null when they stated only a tank. A row is viable when it clears
+     every limit that was actually stated — an unstated one rules out
+     nothing. */
+  function enumerate(raceLaps, fuelPerLap, tank, avgLap, pitLoss, stintLapCap) {
+    var hasTank = tank != null && tank > 0;
     var rows = [];
     for (var stops = 0; stops <= MAX_STOPS; stops++) {
       var plan = planStints(raceLaps, stops + 1, fuelPerLap);
       if (!plan) break;
 
       var maxStint = Math.max.apply(null, plan.fuel);
+      var maxLaps = Math.max.apply(null, plan.laps);
       var total = plan.fuel.reduce(function (a, b) { return a + b; }, 0);
+      var fitsTank = !hasTank || maxStint <= tank + EPS;
+      var fitsStint = stintLapCap == null || maxLaps <= stintLapCap;
 
       rows.push({
         stops: stops,
@@ -124,11 +132,17 @@
         fuel: plan.fuel,
         perStint: plan.perStint,
         lastLaps: plan.lastLaps,
+        maxLaps: maxLaps,
+        /* Race laps only, matching raceTime and the cap it is measured
+           against. The formation lap is fuelled for, not timed. */
+        stintTime: maxLaps * avgLap,
         startFuel: plan.fuel[0],
         minStint: Math.min.apply(null, plan.fuel),
         maxStint: maxStint,
         totalFuel: total,
-        viable: maxStint <= tank + EPS,
+        fitsTank: fitsTank,
+        fitsStint: fitsStint,
+        viable: fitsTank && fitsStint,
         raceTime: raceLaps * avgLap + stops * pitLoss
       });
     }
@@ -161,7 +175,7 @@
   /* --- Main entry ---------------------------------------------------------
      `input` is a plain object of raw values (strings or numbers):
        byTime, raceH, raceM, raceLapsIn, lapM, lapS, lapN,
-       fuelUsed, fuelN, tank, pitLoss
+       fuelUsed, fuelN, tank, pitLoss, stintMin
 
      Returns { error: "<i18n key>", errorVars: {...} } or a full result.
      Errors are KEYS, not sentences: this module has no opinion about
@@ -214,6 +228,22 @@
     var pitLoss = parseNum(input.pitLoss);
     if (pitLoss === null || pitLoss < 0) pitLoss = 0;
 
+    /* An optional stint limit — series regulations, a driver-swap window, or
+       simply how long the racer wants to stay out. Stated in minutes and
+       converted with the same average lap as everything else, so it rules
+       out any strategy whose longest stint would run past it. Blank means
+       the tank is the only limit. */
+    var stintMin = parseNum(input.stintMin);
+    var hasStint = stintMin !== null && stintMin > 0;
+    var stintSeconds = hasStint ? stintMin * 60 : null;
+    var stintLapCap = null;
+    if (hasStint) {
+      stintLapCap = Math.floor(stintSeconds / avgLap + EPS);
+      if (stintLapCap < 1) {
+        return { error: 'err.stintTooShort', errorVars: { lap: fmtLap(avgLap) } };
+      }
+    }
+
     return {
       byTime: byTime,
       avgLap: avgLap,
@@ -230,7 +260,14 @@
       tank: tank,
       hasTank: hasTank,
       pitLoss: pitLoss,
-      strategies: hasTank ? enumerate(raceLaps, fuelPerLap, tank, avgLap, pitLoss) : null
+      stintMinutes: hasStint ? stintMin : null,
+      stintSeconds: stintSeconds,
+      stintLapCap: stintLapCap,
+      hasStint: hasStint,
+      /* Either limit on its own is enough to rank strategies. */
+      strategies: (hasTank || hasStint)
+        ? enumerate(raceLaps, fuelPerLap, hasTank ? tank : null, avgLap, pitLoss, stintLapCap)
+        : null
     };
   }
 

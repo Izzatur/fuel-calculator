@@ -302,9 +302,10 @@ main {
   gap: var(--s2);
 }
 
-/* An odd number of visible cells would otherwise leave a bare rule-coloured
-   slot in the two-column grid. The last cell takes the full width instead. */
-.grid > .cell:last-child { grid-column: 1 / -1; }
+/* Exactly one of the two race-format cells is hidden at a time, so six cells
+   are always in play and the two-column grid always fills. */
+
+.unitbox input::placeholder { color: var(--ink-dim); opacity: 1; }
 
 .field__label {
   display: block;
